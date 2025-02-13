@@ -284,7 +284,7 @@ function handleDelete(row) {
 
 /** 导出按钮操作 */
 function handleExport() {
-  proxy.download('watermark/category/export', {
+  proxy.download('app/admin/category/export', {
     ...queryParams.value
   }, `category_${new Date().getTime()}.xlsx`)
 }

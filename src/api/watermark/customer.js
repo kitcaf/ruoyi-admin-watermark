@@ -1,45 +1,54 @@
 import request from '@/utils/request'
 
-// 查询客户品牌logo关联列表
-export function listCustomer(query) {
+// 查询品牌Logo列表
+export function listBrandLogo(query) {
   return request({
-    url: "/watermark/brand/customer/list",
+    url: "/app/admin/brandLogo/list",
     method: "get",
     params: query,
   })
 }
 
-// 查询客户品牌logo关联详细
-export function getCustomer(id) {
+// 查询品牌Logo详细
+export function getBrandLogo(id) {
   return request({
-    url: "/watermark/brand/customer/" + id,
+    url: "/app/admin/brandLogo/" + id,
     method: "get",
   });
 }
 
-// 新增客户品牌logo关联
-export function addCustomer(data) {
+// 新增品牌Logo
+export function addBrandLogo(data) {
   return request({
-    url: "/watermark/brand/customer",
+    url: "/app/admin/brandLogo",
     method: "post",
     data: data,
   });
 }
 
-// 修改客户品牌logo关联
-export function updateCustomer(data) {
+// 修改品牌Logo
+export function updateBrandLogo(data) {
   return request({
-    url: "/watermark/brand/customer",
+    url: "/app/admin/brandLogo",
     method: "put",
     data: data,
   })
 }
 
-// 删除客户品牌logo关联
-export function delCustomer(id) {
+// 删除品牌Logo
+export function delBrandLogo(id) {
   return request({
-    url: "/watermark/brand/customer/" + id,
+    url: "/app/admin/brandLogo/" + id,
     method: "delete",
   });
+}
+
+// 修改品牌Logo状态
+export function changeBrandLogoStatus(data) {
+  return request({
+    url: "/app/admin/brandLogo/changeStatus",
+    method: "put",
+    data: data
+  })
 }
 
