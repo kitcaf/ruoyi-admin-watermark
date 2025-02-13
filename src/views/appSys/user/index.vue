@@ -3,10 +3,10 @@
         <!-- 搜索区域 -->
         <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch">
             <el-form-item label="设备ID" prop="deviceId">
-                <el-input v-model="queryParams.deviceId" placeholder="请输入设备ID" clearable />
+                <el-input v-model="queryParams.deviceId" placeholder="请输入设备ID" clearable style="width: 200px" />
             </el-form-item>
             <el-form-item label="手机号码" prop="phone">
-                <el-input v-model="queryParams.phone" placeholder="请输入手机号码" clearable />
+                <el-input v-model="queryParams.phone" placeholder="请输入手机号码" clearable style="width: 200px" />
             </el-form-item>
             <el-form-item label="用户类型" prop="userType">
                 <el-select v-model="queryParams.userType" placeholder="用户类型" clearable style="width: 200px">
@@ -58,27 +58,12 @@
                     <dict-tag :options="userTypeOptions" :value="scope.row.userType" />
                 </template>
             </el-table-column>
-            <el-table-column label="剩余次数" align="center" prop="remainingTimes" />
-            <el-table-column label="有效期" align="center" prop="expireTime" width="180">
-                <template #default="scope">
-                    <span>{{ parseTime(scope.row.expireTime) }}</span>
-                </template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" width="250">
+            <el-table-column label="操作" align="center" width="180">
                 <template #default="scope">
                     <el-button type="text" icon="Edit" @click="handleUpdate(scope.row)"
                         v-hasPermi="['app:user:edit']">修改</el-button>
                     <el-button type="text" icon="Delete" @click="handleDelete(scope.row)"
                         v-hasPermi="['app:user:remove']">删除</el-button>
-                    <el-dropdown @command="(command) => handleMore(command, scope.row)" v-hasPermi="['app:user:edit']">
-                        <el-button type="text" icon="More">更多</el-button>
-                        <template #dropdown>
-                            <el-dropdown-menu>
-                                <el-dropdown-item command="resetTimes" icon="RefreshRight">重置次数</el-dropdown-item>
-                                <el-dropdown-item command="updateExpireTime" icon="Timer">修改有效期</el-dropdown-item>
-                            </el-dropdown-menu>
-                        </template>
-                    </el-dropdown>
                 </template>
             </el-table-column>
         </el-table>
@@ -103,12 +88,6 @@
                         <el-option label="正式用户" value="1" />
                     </el-select>
                 </el-form-item>
-                <el-form-item label="剩余次数" prop="remainingTimes">
-                    <el-input-number v-model="form.remainingTimes" :min="0" />
-                </el-form-item>
-                <el-form-item label="有效期" prop="expireTime">
-                    <el-date-picker v-model="form.expireTime" type="datetime" placeholder="请选择有效期" />
-                </el-form-item>
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
@@ -117,41 +96,11 @@
                 </div>
             </template>
         </el-dialog>
-
-        <!-- 重置次数对话框 -->
-        <el-dialog title="重置使用次数" v-model="resetTimesOpen" width="500px" append-to-body>
-            <el-form ref="resetTimesRef" :model="resetTimesForm" :rules="resetTimesRules" label-width="100px">
-                <el-form-item label="重置次数" prop="times">
-                    <el-input-number v-model="resetTimesForm.times" :min="0" />
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <div class="dialog-footer">
-                    <el-button type="primary" @click="submitResetTimes">确 定</el-button>
-                    <el-button @click="resetTimesOpen = false">取 消</el-button>
-                </div>
-            </template>
-        </el-dialog>
-
-        <!-- 修改有效期对话框 -->
-        <el-dialog title="修改有效期" v-model="expireTimeOpen" width="500px" append-to-body>
-            <el-form ref="expireTimeRef" :model="expireTimeForm" :rules="expireTimeRules" label-width="100px">
-                <el-form-item label="有效期" prop="expireTime">
-                    <el-date-picker v-model="expireTimeForm.expireTime" type="datetime" placeholder="请选择有效期" />
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <div class="dialog-footer">
-                    <el-button type="primary" @click="submitExpireTime">确 定</el-button>
-                    <el-button @click="expireTimeOpen = false">取 消</el-button>
-                </div>
-            </template>
-        </el-dialog>
     </div>
 </template>
 
 <script setup name="Index">
-import { listUser, getUser, addUser, updateUser, delUser, resetTimes, updateExpireTime } from '@/api/appSys/user'
+import { listUser, getUser, addUser, updateUser, delUser } from '@/api/appSys/user'
 
 const { proxy } = getCurrentInstance()
 
@@ -173,8 +122,6 @@ const userList = ref([])
 const title = ref("")
 // 是否显示弹出层
 const open = ref(false)
-const resetTimesOpen = ref(false)
-const expireTimeOpen = ref(false)
 
 // 用户类型数据字典
 const userTypeOptions = ref([
@@ -193,28 +140,12 @@ const queryParams = ref({
 
 // 表单参数
 const form = ref({})
-const resetTimesForm = ref({
-    id: undefined,
-    times: 0
-})
-const expireTimeForm = ref({
-    id: undefined,
-    expireTime: undefined
-})
 
 // 表单校验规则
 const rules = ref({
     deviceId: [{ required: true, message: '设备ID不能为空', trigger: 'blur' }],
     nickname: [{ required: true, message: '用户昵称不能为空', trigger: 'blur' }],
     userType: [{ required: true, message: '用户类型不能为空', trigger: 'change' }]
-})
-
-const resetTimesRules = ref({
-    times: [{ required: true, message: '次数不能为空', trigger: 'blur' }]
-})
-
-const expireTimeRules = ref({
-    expireTime: [{ required: true, message: '有效期不能为空', trigger: 'change' }]
 })
 
 /** 查询用户列表 */
@@ -241,9 +172,7 @@ function reset() {
         nickname: undefined,
         avatar: undefined,
         phone: undefined,
-        userType: undefined,
-        remainingTimes: 0,
-        expireTime: undefined
+        userType: undefined
     }
     proxy.resetForm("userRef")
 }
@@ -323,48 +252,6 @@ function handleExport() {
     proxy.download('/app/admin/user/export', {
         ...queryParams.value
     }, `app_user_${new Date().getTime()}.xlsx`)
-}
-
-/** 更多操作 */
-function handleMore(command, row) {
-    switch (command) {
-        case 'resetTimes':
-            resetTimesForm.value.id = row.id
-            resetTimesForm.value.times = 0
-            resetTimesOpen.value = true
-            break
-        case 'updateExpireTime':
-            expireTimeForm.value.id = row.id
-            expireTimeForm.value.expireTime = undefined
-            expireTimeOpen.value = true
-            break
-    }
-}
-
-/** 提交重置次数 */
-function submitResetTimes() {
-    proxy.$refs["resetTimesRef"].validate(valid => {
-        if (valid) {
-            resetTimes(resetTimesForm.value.id, resetTimesForm.value.times).then(() => {
-                proxy.$modal.msgSuccess("重置成功")
-                resetTimesOpen.value = false
-                getList()
-            })
-        }
-    })
-}
-
-/** 提交修改有效期 */
-function submitExpireTime() {
-    proxy.$refs["expireTimeRef"].validate(valid => {
-        if (valid) {
-            updateExpireTime(resetTimesForm.value.id, expireTimeForm.value.expireTime).then(() => {
-                proxy.$modal.msgSuccess("修改成功")
-                expireTimeOpen.value = false
-                getList()
-            })
-        }
-    })
 }
 
 getList()

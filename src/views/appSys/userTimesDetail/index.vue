@@ -13,14 +13,8 @@
         </el-select>
       </el-form-item>
       <el-form-item label="时间范围" prop="timeRange">
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          value-format="YYYY-MM-DD"
-        />
+        <el-date-picker v-model="dateRange" type="daterange" range-separator="-" start-placeholder="开始日期"
+          end-placeholder="结束日期" value-format="YYYY-MM-DD" />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
@@ -31,8 +25,7 @@
     <!-- 操作按钮区域 -->
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button type="primary" plain icon="Plus" @click="handleAdd"
-          v-hasPermi="['app:times:add']">新增次数</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['app:times:add']">新增次数</el-button>
       </el-col>
       <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
@@ -66,8 +59,8 @@
         <template #default="scope">
           <el-button type="text" icon="Delete" @click="handleDelete(scope.row)"
             v-hasPermi="['app:times:remove']">删除</el-button>
-          <el-button type="text" icon="Promotion" @click="handleGrantDaily(scope.row)"
-            v-hasPermi="['app:times:grant']" v-if="scope.row.sourceType === '1'">发放每日次数</el-button>
+          <el-button type="text" icon="Promotion" @click="handleGrantDaily(scope.row)" v-hasPermi="['app:times:grant']"
+            v-if="scope.row.sourceType === '1'">发放每日次数</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -256,4 +249,3 @@ function handleGrantDaily(row) {
 
 getList()
 </script>
-
