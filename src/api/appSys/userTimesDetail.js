@@ -26,6 +26,15 @@ export function addTimes(data) {
   })
 }
 
+// 修改用户次数明细
+export function updateTimesDetail(data) {
+  return request({
+    url: '/app/admin/times',
+    method: 'put',
+    data: data
+  })
+}
+
 // 删除用户次数明细
 export function delTimesDetail(ids) {
   return request({

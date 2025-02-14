@@ -28,6 +28,10 @@
         <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['app:times:add']">新增次数</el-button>
       </el-col>
       <el-col :span="1.5">
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['app:times:edit']">修改</el-button>
+      </el-col>
+      <el-col :span="1.5">
         <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
           v-hasPermi="['app:times:remove']">删除</el-button>
       </el-col>
@@ -57,10 +61,10 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="180">
         <template #default="scope">
+          <el-button type="text" icon="Edit" @click="handleUpdate(scope.row)"
+            v-hasPermi="['app:times:edit']">修改</el-button>
           <el-button type="text" icon="Delete" @click="handleDelete(scope.row)"
             v-hasPermi="['app:times:remove']">删除</el-button>
-          <el-button type="text" icon="Promotion" @click="handleGrantDaily(scope.row)" v-hasPermi="['app:times:grant']"
-            v-if="scope.row.sourceType === '1'">发放每日次数</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -68,13 +72,13 @@
     <pagination v-if="total > 0" :total="total" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize"
       @pagination="getList" />
 
-    <!-- 添加次数对话框 -->
+    <!-- 添加或修改对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form ref="timesRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="用户ID" prop="userId">
           <el-input v-model="form.userId" placeholder="请输入用户ID" />
         </el-form-item>
-        <el-form-item label="增加次数" prop="times">
+        <el-form-item label="剩余次数" prop="times">
           <el-input-number v-model="form.times" :min="1" />
         </el-form-item>
         <el-form-item label="来源类型" prop="sourceType">
@@ -85,8 +89,8 @@
         <el-form-item label="来源ID" prop="sourceId" v-if="form.sourceType !== '1'">
           <el-input v-model="form.sourceId" placeholder="请输入来源ID" />
         </el-form-item>
-        <el-form-item label="有效期天数" prop="durationDays">
-          <el-input-number v-model="form.durationDays" :min="1" />
+        <el-form-item label="有效期截止时间" prop="expireTime">
+          <el-date-picker v-model="form.expireTime" type="datetime" placeholder="请选择有效期截止时间" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -101,7 +105,7 @@
 
 <script setup name="UserTimesDetail">
 // 用户次数明细管理页面
-import { listTimesDetail, getTimesDetail, addTimes, delTimesDetail, grantDailyTimes } from '@/api/appSys/userTimesDetail'
+import { listTimesDetail, getTimesDetail, addTimes, updateTimesDetail, delTimesDetail } from '@/api/appSys/userTimesDetail'
 
 const { proxy } = getCurrentInstance()
 
@@ -109,6 +113,8 @@ const { proxy } = getCurrentInstance()
 const loading = ref(false)
 // 选中数组
 const ids = ref([])
+// 非单个禁用
+const single = ref(true)
 // 非多个禁用
 const multiple = ref(true)
 // 显示搜索条件
@@ -136,9 +142,7 @@ const queryParams = ref({
   pageNum: 1,
   pageSize: 10,
   userId: undefined,
-  sourceType: undefined,
-  beginTime: undefined,
-  endTime: undefined
+  sourceType: undefined
 })
 
 // 表单参数
@@ -147,9 +151,9 @@ const form = ref({})
 // 表单校验规则
 const rules = ref({
   userId: [{ required: true, message: '用户ID不能为空', trigger: 'blur' }],
-  times: [{ required: true, message: '次数不能为空', trigger: 'blur' }],
+  times: [{ required: true, message: '剩余次数不能为空', trigger: 'blur' }],
   sourceType: [{ required: true, message: '来源类型不能为空', trigger: 'change' }],
-  durationDays: [{ required: true, message: '有效期天数不能为空', trigger: 'blur' }]
+  expireTime: [{ required: true, message: '有效期截止时间不能为空', trigger: 'change' }]
 })
 
 /** 查询用户次数明细列表 */
@@ -171,11 +175,12 @@ function cancel() {
 /** 表单重置 */
 function reset() {
   form.value = {
+    id: undefined,
     userId: undefined,
     times: 1,
     sourceType: undefined,
     sourceId: undefined,
-    durationDays: 1
+    expireTime: undefined
   }
   proxy.resetForm("timesRef")
 }
@@ -196,6 +201,7 @@ function resetQuery() {
 /** 多选框选中数据 */
 function handleSelectionChange(selection) {
   ids.value = selection.map(item => item.id)
+  single.value = selection.length !== 1
   multiple.value = !selection.length
 }
 
@@ -206,15 +212,34 @@ function handleAdd() {
   title.value = "添加次数"
 }
 
+/** 修改按钮操作 */
+function handleUpdate(row) {
+  reset()
+  const id = row.id || ids.value[0]
+  getTimesDetail(id).then(response => {
+    form.value = response.data
+    open.value = true
+    title.value = "修改次数"
+  })
+}
+
 /** 提交按钮 */
 function submitForm() {
   proxy.$refs["timesRef"].validate(valid => {
     if (valid) {
-      addTimes(form.value).then(response => {
-        proxy.$modal.msgSuccess("新增成功")
-        open.value = false
-        getList()
-      })
+      if (form.value.id) {
+        updateTimesDetail(form.value).then(response => {
+          proxy.$modal.msgSuccess("修改成功")
+          open.value = false
+          getList()
+        })
+      } else {
+        addTimes(form.value).then(response => {
+          proxy.$modal.msgSuccess("新增成功")
+          open.value = false
+          getList()
+        })
+      }
     }
   })
 }
@@ -223,10 +248,10 @@ function submitForm() {
 function handleDelete(row) {
   const timesIds = row.id || ids.value
   proxy.$modal.confirm('是否确认删除用户次数明细编号为"' + timesIds + '"的数据项？').then(() => {
-    delTimesDetail(timesIds).then(() => {
-      getList()
-      proxy.$modal.msgSuccess("删除成功")
-    })
+    return delTimesDetail(timesIds)
+  }).then(() => {
+    getList()
+    proxy.$modal.msgSuccess("删除成功")
   })
 }
 
@@ -235,16 +260,6 @@ function handleExport() {
   proxy.download('/app/admin/times/export', {
     ...queryParams.value
   }, `user_times_detail_${new Date().getTime()}.xlsx`)
-}
-
-/** 发放每日次数操作 */
-function handleGrantDaily(row) {
-  proxy.$modal.confirm('是否确认为用户"' + row.userId + '"发放每日次数？').then(() => {
-    grantDailyTimes(row.userId).then(() => {
-      getList()
-      proxy.$modal.msgSuccess("发放成功")
-    })
-  })
 }
 
 getList()
