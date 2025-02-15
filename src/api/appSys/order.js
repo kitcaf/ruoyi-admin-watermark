@@ -16,3 +16,12 @@ export function getOrderStats() {
         method: 'get'
     })
 }
+
+// 导出订单
+export function exportOrder(query) {
+    return request({
+        url: '/app/admin/pay/export',
+        method: 'post',
+        params: query
+    })
+}
