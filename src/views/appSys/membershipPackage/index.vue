@@ -142,10 +142,10 @@ const open = ref(false)
 
 // 套餐类型数据字典
 const packageTypeOptions = ref([
-    { label: '月卡', value: '1' },
-    { label: '年卡', value: '2' },
-    { label: '终身卡', value: '3' },
-    { label: '单月卡', value: '4' }
+    { label: '连续包月', value: '1' },
+    { label: '连续包年', value: '2' },
+    { label: '终身会员', value: '3' },
+    { label: '仅购买一个月', value: '4' }
 ])
 
 // 状态数据字典
