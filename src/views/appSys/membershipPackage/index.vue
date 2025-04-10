@@ -92,12 +92,6 @@
                 <el-form-item label="套餐价格" prop="price">
                     <el-input-number v-model="form.price" :precision="2" :step="0.01" :min="0" />
                 </el-form-item>
-                <el-form-item label="可使用次数" prop="usageTimes">
-                    <el-input-number v-model="form.usageTimes" :min="1" />
-                </el-form-item>
-                <el-form-item label="有效期天数" prop="durationDays">
-                    <el-input-number v-model="form.durationDays" :min="1" />
-                </el-form-item>
                 <el-form-item label="状态" prop="status">
                     <el-radio-group v-model="form.status">
                         <el-radio label="0">正常</el-radio>

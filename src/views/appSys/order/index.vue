@@ -117,9 +117,14 @@
                     <dict-tag :options="statusOptions" :value="scope.row.status" />
                 </template>
             </el-table-column>
+            <el-table-column label="创建时间" align="center" prop="createTime" width="180">
+                <template #default="scope">
+                    <span>{{ proxy.parseTime(scope.row.createTime) }}</span>
+                </template>
+            </el-table-column>
             <el-table-column label="支付时间" align="center" prop="payTime" width="180">
                 <template #default="scope">
-                    <span>{{ parseTime(scope.row.payTime) }}</span>
+                    <span>{{ proxy.parseTime(scope.row.payTime) }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="备注" align="center" prop="remark" />
@@ -134,7 +139,6 @@
 import { listOrder, getOrderStats } from "@/api/appSys/order";
 
 const { proxy } = getCurrentInstance();
-const { parseTime } = proxy.useDict();
 
 // 遮罩层
 const loading = ref(false);
@@ -177,16 +181,29 @@ const queryParams = ref({
 function getList() {
     loading.value = true;
     listOrder(proxy.addDateRange(queryParams.value, dateRange.value)).then(response => {
-        orderList.value = response.rows;
-        total.value = response.total;
+        if (response.code === 200) {
+            orderList.value = response.rows;
+            total.value = response.total;
+        } else {
+            proxy.$modal.msgError(response.msg);
+        }
         loading.value = false;
+    }).catch(error => {
+        console.error('获取订单列表失败:', error);
+        loading.value = false;
+        proxy.$modal.msgError("获取订单列表失败");
     });
 }
 
 /** 获取订单统计 */
 function getStats() {
     getOrderStats().then(response => {
-        stats.value = response.data;
+        console.log('订单统计响应:', response); // 添加日志
+        if (response.code === 200) {
+            stats.value = response.data || {};
+        }
+    }).catch(error => {
+        console.error('获取订单统计失败:', error);
     });
 }
 
@@ -206,12 +223,16 @@ function resetQuery() {
 /** 导出按钮操作 */
 function handleExport() {
     proxy.download('/app/admin/pay/export', {
-        ...queryParams.value
+        ...queryParams.value,
+        ...proxy.addDateRange(queryParams.value, dateRange.value)
     }, `order_${new Date().getTime()}.xlsx`);
 }
 
-getList();
-getStats();
+// 页面加载时执行
+onMounted(() => {
+    getList();
+    getStats();
+});
 </script>
 
 <style scoped>

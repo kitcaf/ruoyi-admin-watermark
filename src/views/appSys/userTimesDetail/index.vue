@@ -132,7 +132,7 @@ const dateRange = ref([])
 
 // 来源类型数据字典
 const sourceTypeOptions = ref([
-  { label: '每日领取', value: '1' },
+  { label: '注册赠送', value: '1' },
   { label: '套餐购买', value: '2' },
   { label: '激活码', value: '3' }
 ])

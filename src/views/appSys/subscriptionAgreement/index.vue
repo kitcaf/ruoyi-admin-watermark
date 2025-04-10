@@ -29,21 +29,6 @@
             <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
         </el-row>
 
-        <!-- 统计卡片 -->
-        <!-- <el-row :gutter="20" class="mb8">
-            <el-col :span="6" v-for="(item, index) in statsCards" :key="index">
-                <el-card>
-                    <template #header>
-                        <div class="card-header">
-                            <span>{{ item.title }}</span>
-                        </div>
-                    </template>
-<div class="card-body">
-    {{ item.prefix || '' }}{{ stats[item.key] || 0 }}{{ item.suffix || '' }}
-</div>
-</el-card>
-</el-col>
-</el-row> -->
 
         <!-- 表格区域 -->
         <el-table v-loading="loading" :data="agreementList">
@@ -58,7 +43,7 @@
             </el-table-column>
             <el-table-column label="下次扣款时间" align="center" prop="nextExecuteTime" width="180">
                 <template #default="scope">
-                    <span>{{ parseTime(scope.row.nextExecuteTime) }}</span>
+                    <span>{{ proxy.parseTime(scope.row.nextExecuteTime) }}</span>
                 </template>
             </el-table-column>
             <el-table-column label="累计扣款金额" align="center" prop="totalAmount">

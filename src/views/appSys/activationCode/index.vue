@@ -86,12 +86,22 @@
                 <el-form-item label="激活码名称" prop="codeName">
                     <el-input v-model="form.codeName" placeholder="请输入激活码名称" />
                 </el-form-item>
-                <el-form-item label="增加可使用次数" prop="usageTimes">
-                    <el-input-number v-model="form.usageTimes" :min="1" />
+                <el-form-item label="会员类型" prop="type">
+                    <el-select v-model="form.type" placeholder="请选择会员类型" @change="handleTypeChange">
+                        <el-option label="月卡" value="0" />
+                        <el-option label="年卡" value="1" />
+                        <el-option label="终身卡" value="2" />
+                        <el-option label="自定义" value="3" />
+                    </el-select>
                 </el-form-item>
-                <el-form-item label="有效期天数" prop="durationDays">
-                    <el-input-number v-model="form.durationDays" :min="1" />
-                </el-form-item>
+                <template v-if="form.type === '3'">
+                    <el-form-item label="增加可使用次数" prop="usageTimes">
+                        <el-input-number v-model="form.usageTimes" :min="1" />
+                    </el-form-item>
+                    <el-form-item label="有效期天数" prop="durationDays">
+                        <el-input-number v-model="form.durationDays" :min="1" />
+                    </el-form-item>
+                </template>
                 <el-form-item label="过期时间" prop="expireTime">
                     <el-date-picker v-model="form.expireTime" type="datetime" placeholder="请选择过期时间"
                         value-format="YYYY-MM-DD HH:mm:ss" />
@@ -161,6 +171,7 @@ const form = ref({})
 const rules = ref({
     code: [{ required: true, message: '激活码不能为空', trigger: 'blur' }],
     codeName: [{ required: true, message: '激活码名称不能为空', trigger: 'blur' }],
+    type: [{ required: true, message: '会员类型不能为空', trigger: 'change' }],
     usageTimes: [{ required: true, message: '可使用次数不能为空', trigger: 'blur' }],
     durationDays: [{ required: true, message: '有效期天数不能为空', trigger: 'blur' }],
     status: [{ required: true, message: '状态不能为空', trigger: 'change' }]
@@ -188,6 +199,7 @@ function reset() {
         id: undefined,
         code: undefined,
         codeName: undefined,
+        type: undefined,
         usageTimes: 1,
         durationDays: 1,
         status: '0'
@@ -232,6 +244,17 @@ function handleUpdate(row) {
     })
 }
 
+/** 处理会员类型变化 */
+function handleTypeChange(value) {
+    if (value === '3') {
+        form.value.usageTimes = 1
+        form.value.durationDays = 1
+    } else {
+        form.value.usageTimes = 999
+        form.value.durationDays = value === '0' ? 30 : value === '1' ? 365 : 36500
+    }
+}
+
 /** 提交按钮 */
 function submitForm() {
     proxy.$refs["codeRef"].validate(valid => {
@@ -243,7 +266,7 @@ function submitForm() {
                     getList()
                 })
             } else {
-                addCode(form.value).then(response => {
+                addCode(form.value, form.value.type).then(response => {
                     proxy.$modal.msgSuccess("新增成功")
                     open.value = false
                     getList()

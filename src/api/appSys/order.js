@@ -22,6 +22,7 @@ export function exportOrder(query) {
     return request({
         url: '/app/admin/pay/export',
         method: 'post',
-        params: query
+        data: query,
+        responseType: 'blob'
     })
 }

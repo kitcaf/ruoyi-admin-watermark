@@ -18,10 +18,11 @@ export function getCode(id) {
 }
 
 // 新增激活码
-export function addCode(data) {
+export function addCode(data, type) {
     return request({
         url: '/app/admin/code',
         method: 'post',
+        params: { type },
         data: data
     })
 }

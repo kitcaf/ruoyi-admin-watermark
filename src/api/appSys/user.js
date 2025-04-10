@@ -70,3 +70,11 @@ function formatDateTime(date) {
   
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
+
+// 添加封禁/解封用户接口
+export function banUser(id, delFlag) {
+  return request({
+    url: `/app/admin/user/ban/${id}/${delFlag}`,
+    method: 'put'
+  })
+}

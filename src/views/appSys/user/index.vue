@@ -1,3 +1,4 @@
+<!-- appUser管理页面 -->
 <template>
     <div class="app-container">
         <!-- 搜索区域 -->
@@ -12,6 +13,12 @@
                 <el-select v-model="queryParams.userType" placeholder="用户类型" clearable style="width: 200px">
                     <el-option label="游客" value="0" />
                     <el-option label="正式用户" value="1" />
+                </el-select>
+            </el-form-item>
+            <el-form-item label="会员状态" prop="isMember">
+                <el-select v-model="queryParams.isMember" placeholder="会员状态" clearable style="width: 200px">
+                    <el-option label="否" value="0" />
+                    <el-option label="是" value="1" />
                 </el-select>
             </el-form-item>
             <el-form-item>
@@ -58,12 +65,31 @@
                     <dict-tag :options="userTypeOptions" :value="scope.row.userType" />
                 </template>
             </el-table-column>
-            <el-table-column label="操作" align="center" width="180">
+            <el-table-column label="会员状态" align="center" prop="isMember">
+                <template #default="scope">
+                    <dict-tag :options="memberOptions" :value="scope.row.isMember" />
+                </template>
+            </el-table-column>
+            <el-table-column label="会员过期时间" align="center" prop="memberExpireTime" width="180">
+                <template #default="scope">
+                    <span>{{ parseTime(scope.row.memberExpireTime) }}</span>
+                </template>
+            </el-table-column>
+            <el-table-column label="封禁状态" align="center" prop="delFlag">
+                <template #default="scope">
+                    <dict-tag :options="banOptions" :value="scope.row.delFlag" />
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center" width="220">
                 <template #default="scope">
                     <el-button type="text" icon="Edit" @click="handleUpdate(scope.row)"
                         v-hasPermi="['app:user:edit']">修改</el-button>
                     <el-button type="text" icon="Delete" @click="handleDelete(scope.row)"
                         v-hasPermi="['app:user:remove']">删除</el-button>
+                    <el-button type="text" :icon="scope.row.delFlag === '1' ? 'Unlock' : 'Lock'"
+                        @click="handleBan(scope.row)" v-hasPermi="['app:user:edit']">
+                        {{ scope.row.delFlag === '1' ? '解封' : '封禁' }}
+                    </el-button>
                 </template>
             </el-table-column>
         </el-table>
@@ -88,6 +114,15 @@
                         <el-option label="正式用户" value="1" />
                     </el-select>
                 </el-form-item>
+                <el-form-item label="会员状态" prop="isMember">
+                    <el-select v-model="form.isMember" placeholder="请选择会员状态">
+                        <el-option label="否" value="0" />
+                        <el-option label="是" value="1" />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="会员过期时间" prop="memberExpireTime" v-if="form.isMember === '1'">
+                    <el-date-picker v-model="form.memberExpireTime" type="datetime" placeholder="请选择会员过期时间" />
+                </el-form-item>
             </el-form>
             <template #footer>
                 <div class="dialog-footer">
@@ -100,7 +135,7 @@
 </template>
 
 <script setup name="Index">
-import { listUser, getUser, addUser, updateUser, delUser } from '@/api/appSys/user'
+import { listUser, getUser, addUser, updateUser, delUser, banUser } from '@/api/appSys/user'
 
 const { proxy } = getCurrentInstance()
 
@@ -129,13 +164,26 @@ const userTypeOptions = ref([
     { label: '正式用户', value: '1' }
 ])
 
+// 会员状态选项
+const memberOptions = ref([
+    { label: '非会员', value: '0' },
+    { label: '会员', value: '1' }
+])
+
+// 封禁状态选项
+const banOptions = ref([
+    { label: '正常', value: '0' },
+    { label: '已封禁', value: '1' }
+])
+
 // 查询参数
 const queryParams = ref({
     pageNum: 1,
     pageSize: 10,
     deviceId: undefined,
     phone: undefined,
-    userType: null
+    userType: undefined,
+    isMember: undefined
 })
 
 // 表单参数
@@ -152,6 +200,7 @@ const rules = ref({
 function getList() {
     loading.value = true
     listUser(queryParams.value).then(response => {
+        console.log("查询用户结果", response);
         userList.value = response.rows
         total.value = response.total
         loading.value = false
@@ -172,7 +221,9 @@ function reset() {
         nickname: undefined,
         avatar: undefined,
         phone: undefined,
-        userType: undefined
+        userType: undefined,
+        isMember: '0',
+        memberExpireTime: undefined
     }
     proxy.resetForm("userRef")
 }
@@ -185,7 +236,8 @@ function handleQuery() {
 
 /** 重置按钮操作 */
 function resetQuery() {
-    queryParams.value.userType = null;  // 明确设置为 null
+    queryParams.value.userType = undefined;
+    queryParams.value.isMember = undefined;
     proxy.resetForm("queryRef")
     handleQuery()
 }
@@ -252,6 +304,20 @@ function handleExport() {
     proxy.download('/app/admin/user/export', {
         ...queryParams.value
     }, `app_user_${new Date().getTime()}.xlsx`)
+}
+
+/** 封禁/解封处理函数 */
+function handleBan(row) {
+    const newStatus = row.delFlag === '1' ? '0' : '1'
+    const text = newStatus === '1' ? '封禁' : '解封'
+    proxy.$modal.confirm(`确认要${text}该用户吗？`).then(() => {
+        banUser(row.id, newStatus).then(() => {
+            getList()
+            proxy.$modal.msgSuccess(text + "成功")
+        }).catch(() => {
+            proxy.$modal.msgError(text + "失败")
+        })
+    })
 }
 
 getList()
